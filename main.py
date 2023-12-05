@@ -46,13 +46,10 @@ df_url = get_dataframe_from_sheet(spreadsheet, 'suumo_url')
 # Kankyo_url 列のみを取り出してリストに変換
 Bukken_URL = df_url['Bukken_URL'].tolist()
 
-########### テスト用にリストを先頭30行にしぼる
-# Bukken_URL_30 = Bukken_URL[:30]
-
 # 結果を格納するリスト
 results = []
 
-for url in Bukken_URL_30:
+for url in Bukken_URL:
     res = requests.get(url)
     soup = BeautifulSoup(res.text, 'html.parser')
 
