@@ -1,1 +1,1 @@
-# 03_sum_property_actions
+# 03_sum_property_actions　01で取得した物件ごとの個別URLから物件名や家賃を取得する
