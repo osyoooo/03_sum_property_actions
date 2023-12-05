@@ -47,7 +47,7 @@ df_url = get_dataframe_from_sheet(spreadsheet, 'suumo_url')
 Bukken_URL = df_url['Bukken_URL'].tolist()
 
 ########### テスト用にリストを先頭30行にしぼる
-Bukken_URL_30 = Bukken_URL[:30]
+# Bukken_URL_30 = Bukken_URL[:30]
 
 # 結果を格納するリスト
 results = []
