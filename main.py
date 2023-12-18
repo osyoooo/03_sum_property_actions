@@ -43,7 +43,7 @@ spreadsheet = gc.open_by_key(SPREADSHEET_KEY)
 # DataFrameに変換
 df_url = get_dataframe_from_sheet(spreadsheet, 'suumo_url')
 
-# Kankyo_url 列のみを取り出してリストに変換
+# bukken_url 列のみを取り出してリストに変換
 Bukken_URL = df_url['Bukken_URL'].tolist()
 
 # 結果を格納するリスト
@@ -53,16 +53,35 @@ for url in Bukken_URL:
     res = requests.get(url)
     soup = BeautifulSoup(res.text, 'html.parser')
 
-    # 物件名の取得（存在しない場合は None を設定）
-    name_tag = soup.find('h1', class_='section_h1-header-title')
-    name = name_tag.text if name_tag else None
-
     # bc_codeの取得
     bc_code_match = re.search(r'bc=(\d+)', url)
     bc_code = bc_code_match.group(1) if bc_code_match else None
 
+    # 不動産会社名の取得
+    name_tag = soup.find('span', class_='itemcassette-header-ttl')
+    real_estate_company_name = name_tag.text.strip() if name_tag else None
+
+    # 免許番号の取得
+    license_tag = soup.find('span', class_='itemcassette-header-sub')
+    license_number = None
+    if license_tag:
+        license_search = re.search(r'国土交通大臣（\d+）第(\d+)号', license_tag.text)
+        if license_search:
+            license_number = license_search.group()
+
+    # URLの取得と変換
+    url_tag = soup.find('div', class_='itemcassette_img-desc').find('a', href=True)
+    full_url = f"https://suumo.jp{url_tag['href']}" if url_tag else None
+
+    # 不動産コードの取得
+    property_code = None
+    if url_tag:
+        code_search = re.search(r'kc_(\d+)', url_tag['href'])
+        if code_search:
+            property_code = code_search.group(1)
+
     # 辞書に格納
-    property_dict = {'Bc_code': bc_code, 'name': name, 'URL': url}
+    property_dict = {'Bc_code': bc_code, 'Real_estate_company_name': real_estate_company_name, 'URL': full_url, 'License_number': license_number, 'Property_code': property_code}
 
     # 各テーブルのデータを辞書に追加
     for table in soup.find_all('table', class_=['property_view_table', 'data_table']):
