@@ -49,7 +49,7 @@ Bukken_URL = df_url['Bukken_URL'].tolist()
 # 結果を格納するリスト
 results = []
 
-or url in Bukken_URL:
+for url in Bukken_URL:
     res = requests.get(url)
     soup = BeautifulSoup(res.text, 'html.parser')
 
