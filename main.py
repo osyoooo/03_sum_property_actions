@@ -43,7 +43,7 @@ spreadsheet = gc.open_by_key(SPREADSHEET_KEY)
 # DataFrameに変換
 df_url = get_dataframe_from_sheet(spreadsheet, 'suumo_url')
 
-# bukken_url 列のみを取り出してリストに変換
+# Kankyo_url 列のみを取り出してリストに変換
 Bukken_URL = df_url['Bukken_URL'].tolist()
 
 # 結果を格納するリスト
@@ -53,40 +53,27 @@ for url in Bukken_URL:
     res = requests.get(url)
     soup = BeautifulSoup(res.text, 'html.parser')
 
+    # 物件名の取得（存在しない場合は None を設定）
+    name_tag = soup.find('h1', class_='section_h1-header-title')
+    name = name_tag.text if name_tag else None
+
     # bc_codeの取得
     bc_code_match = re.search(r'bc=(\d+)', url)
     bc_code = bc_code_match.group(1) if bc_code_match else None
 
-    # 不動産会社名の取得
-    name_tag = soup.find('span', class_='itemcassette-header-ttl')
-    real_estate_company_name = name_tag.text.strip() if name_tag else None
-
-    # 免許番号の取得
-    license_tag = soup.find('span', class_='itemcassette-header-sub')
-    license_number = None
-    if license_tag:
-        license_search = re.search(r'国土交通大臣（\d+）第(\d+)号', license_tag.text)
-        license_number = license_search.group() if license_search else None
-
-    # URLの取得と変換
-    url_div = soup.find('div', class_='itemcassette_img-desc')
-    if url_div:
-        url_tag = url_div.find('a', href=True)
-        full_url = f"https://suumo.jp{url_tag['href']}" if url_tag else None
-    else:
-        full_url = None
-
-    # 不動産コードの取得
-    property_code = None
-    if full_url:
-        code_search = re.search(r'kc_(\d+)', full_url)
-        property_code = code_search.group(1) if code_search else None
-
     # 辞書に格納
-    property_dict = {'Bc_code': bc_code, 'Real_estate_company_name': real_estate_company_name, 'URL': full_url, 'License_number': license_number, 'Property_code': property_code}
+    property_dict = {'Bc_code': bc_code, 'name': name, 'URL': url}
 
-    # 各テーブルのデータを辞書に追加 (既存のコードをそのまま使用)
-    # ...
+    # 各テーブルのデータを辞書に追加
+    for table in soup.find_all('table', class_=['property_view_table', 'data_table']):
+        for row in table.find_all('tr'):
+            cells = row.find_all(['th', 'td'])
+            row_cells = [cell.get_text(strip=True) for cell in cells]
+            if len(row_cells) == 2:
+                property_dict[row_cells[0]] = row_cells[1]
+            elif len(row_cells) == 4:
+                property_dict[row_cells[0]] = row_cells[1]
+                property_dict[row_cells[2]] = row_cells[3]
 
     # 結果リストに追加
     results.append(property_dict)
